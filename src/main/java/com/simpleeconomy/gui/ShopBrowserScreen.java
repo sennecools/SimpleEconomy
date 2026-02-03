@@ -1,19 +1,16 @@
 package com.simpleeconomy.gui;
 
-import com.mojang.authlib.GameProfile;
 import com.simpleeconomy.economy.EconomyManager;
 import com.simpleeconomy.network.NetworkHandler;
-import com.simpleeconomy.network.packets.CreateShopPacket;
 import com.simpleeconomy.network.packets.RequestShopsPacket;
 import com.simpleeconomy.network.packets.SyncShopsPacket;
 import com.simpleeconomy.network.packets.ToggleFavoritePacket;
 import com.simpleeconomy.shop.ShopCategory;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -24,10 +21,13 @@ import java.util.UUID;
 
 public class ShopBrowserScreen extends Screen {
 
-    private static final int SHOPS_PER_PAGE = 21; // 7 columns x 3 rows
+    private static final ResourceLocation BACKGROUND = ResourceLocation.withDefaultNamespace("textures/gui/demo_background.png");
+    private static final ResourceLocation SLOT_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
+
+    private static final int SHOPS_PER_PAGE = 21;
     private static final int COLUMNS = 7;
-    private static final int SHOP_SIZE = 24;
-    private static final int SHOP_SPACING = 4;
+    private static final int SLOT_SIZE = 18;
+    private static final int SLOT_SPACING = 2;
 
     private int page = 0;
     private EditBox searchBox;
@@ -39,11 +39,11 @@ public class ShopBrowserScreen extends Screen {
 
     private int guiLeft;
     private int guiTop;
-    private int guiWidth = 256;
-    private int guiHeight = 200;
+    private int guiWidth = 176;
+    private int guiHeight = 166;
 
     public ShopBrowserScreen() {
-        super(Component.literal("Shop Browser"));
+        super(Component.literal("Marketplace"));
     }
 
     @Override
@@ -53,12 +53,12 @@ public class ShopBrowserScreen extends Screen {
         guiLeft = (this.width - guiWidth) / 2;
         guiTop = (this.height - guiHeight) / 2;
 
-        // Request shop data from server
         NetworkHandler.sendToServer(new RequestShopsPacket());
 
         // Search box
-        searchBox = new EditBox(this.font, guiLeft + 8, guiTop + 20, 150, 16, Component.literal("Search..."));
+        searchBox = new EditBox(this.font, guiLeft + 8, guiTop + 18, 100, 12, Component.literal("Search..."));
         searchBox.setMaxLength(50);
+        searchBox.setBordered(true);
         searchBox.setValue(ClientShopData.getSearchQuery());
         searchBox.setResponder(text -> {
             ClientShopData.setSearchQuery(text);
@@ -70,93 +70,96 @@ public class ShopBrowserScreen extends Screen {
         sortButton = Button.builder(Component.literal(ClientShopData.getSortType().getDisplayName()), btn -> {
             ClientShopData.setSortType(ClientShopData.getSortType().next());
             btn.setMessage(Component.literal(ClientShopData.getSortType().getDisplayName()));
-        }).bounds(guiLeft + 162, guiTop + 19, 60, 18).build();
+        }).bounds(guiLeft + 112, guiTop + 16, 56, 14).build();
         this.addRenderableWidget(sortButton);
-
-        // Category filter button
-        String catName = ClientShopData.getFilterCategory() == null ? "All" : ClientShopData.getFilterCategory().getDisplayName();
-        categoryButton = Button.builder(Component.literal(catName), btn -> {
-            ShopCategory current = ClientShopData.getFilterCategory();
-            ShopCategory[] categories = ShopCategory.values();
-            if (current == null) {
-                ClientShopData.setFilterCategory(categories[0]);
-            } else {
-                int nextIdx = (current.ordinal() + 1) % (categories.length + 1);
-                if (nextIdx == categories.length) {
-                    ClientShopData.setFilterCategory(null);
-                } else {
-                    ClientShopData.setFilterCategory(categories[nextIdx]);
-                }
-            }
-            ShopCategory newCat = ClientShopData.getFilterCategory();
-            btn.setMessage(Component.literal(newCat == null ? "All" : newCat.getDisplayName()));
-            page = 0;
-        }).bounds(guiLeft + 224, guiTop + 19, 24, 18).build();
-        this.addRenderableWidget(categoryButton);
 
         // Navigation buttons
         prevButton = Button.builder(Component.literal("<"), btn -> {
             if (page > 0) page--;
-        }).bounds(guiLeft + 8, guiTop + guiHeight - 24, 20, 20).build();
+        }).bounds(guiLeft + 8, guiTop + guiHeight - 22, 20, 16).build();
         this.addRenderableWidget(prevButton);
 
         nextButton = Button.builder(Component.literal(">"), btn -> {
             int maxPages = getMaxPages();
             if (page < maxPages - 1) page++;
-        }).bounds(guiLeft + guiWidth - 28, guiTop + guiHeight - 24, 20, 20).build();
+        }).bounds(guiLeft + guiWidth - 28, guiTop + guiHeight - 22, 20, 16).build();
         this.addRenderableWidget(nextButton);
 
-        // Create shop button (+)
-        createShopButton = Button.builder(Component.literal("+"), btn -> {
+        // Create shop button
+        createShopButton = Button.builder(Component.literal("+ New Shop"), btn -> {
             minecraft.setScreen(new CreateShopScreen(this));
-        }).bounds(guiLeft + guiWidth / 2 - 10, guiTop + guiHeight - 24, 20, 20).build();
+        }).bounds(guiLeft + guiWidth / 2 - 30, guiTop + guiHeight - 22, 60, 16).build();
         this.addRenderableWidget(createShopButton);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // Dark background
-        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xCC000000);
-        graphics.fill(guiLeft + 1, guiTop + 1, guiLeft + guiWidth - 1, guiTop + guiHeight - 1, 0xCC222222);
+        // Darken background
+        this.renderBackground(graphics, mouseX, mouseY, partialTick);
+
+        // Draw container-style background
+        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xFFC6C6C6);
+        // Top border
+        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + 1, 0xFFFFFFFF);
+        graphics.fill(guiLeft, guiTop + 1, guiLeft + 1, guiTop + guiHeight, 0xFFFFFFFF);
+        // Bottom border (dark)
+        graphics.fill(guiLeft, guiTop + guiHeight - 1, guiLeft + guiWidth, guiTop + guiHeight, 0xFF555555);
+        graphics.fill(guiLeft + guiWidth - 1, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xFF555555);
+        // Inner shadow
+        graphics.fill(guiLeft + 1, guiTop + 1, guiLeft + guiWidth - 1, guiTop + 2, 0xFFDBDBDB);
+        graphics.fill(guiLeft + 1, guiTop + 2, guiLeft + 2, guiTop + guiHeight - 1, 0xFFDBDBDB);
 
         // Title
-        graphics.drawCenteredString(this.font, "Marketplace", guiLeft + guiWidth / 2, guiTop + 6, 0xFFFFFF);
+        graphics.drawString(this.font, "Marketplace", guiLeft + 8, guiTop + 6, 0x404040, false);
 
-        // Balance display
+        // Balance
         String balanceText = EconomyManager.formatBalance(ClientShopData.getBalance()) + " coins";
-        graphics.drawString(this.font, balanceText, guiLeft + guiWidth - font.width(balanceText) - 8, guiTop + 6, 0xFFD700);
+        graphics.drawString(this.font, balanceText, guiLeft + guiWidth - font.width(balanceText) - 8, guiTop + 6, 0x404040, false);
 
         super.render(graphics, mouseX, mouseY, partialTick);
+
+        // Render shop slots area
+        int slotAreaX = guiLeft + 8;
+        int slotAreaY = guiTop + 34;
+        int slotAreaWidth = guiWidth - 16;
+        int slotAreaHeight = 80;
+
+        // Dark slot area background
+        graphics.fill(slotAreaX, slotAreaY, slotAreaX + slotAreaWidth, slotAreaY + slotAreaHeight, 0xFF8B8B8B);
+        graphics.fill(slotAreaX, slotAreaY, slotAreaX + slotAreaWidth, slotAreaY + 1, 0xFF373737);
+        graphics.fill(slotAreaX, slotAreaY, slotAreaX + 1, slotAreaY + slotAreaHeight, 0xFF373737);
+        graphics.fill(slotAreaX + 1, slotAreaY + slotAreaHeight - 1, slotAreaX + slotAreaWidth, slotAreaY + slotAreaHeight, 0xFFFFFFFF);
+        graphics.fill(slotAreaX + slotAreaWidth - 1, slotAreaY + 1, slotAreaX + slotAreaWidth, slotAreaY + slotAreaHeight - 1, 0xFFFFFFFF);
 
         // Render shops
         List<SyncShopsPacket.ShopData> shops = ClientShopData.getFilteredShops();
         int startIdx = page * SHOPS_PER_PAGE;
         int endIdx = Math.min(startIdx + SHOPS_PER_PAGE, shops.size());
 
-        int shopAreaY = guiTop + 42;
-        int shopAreaX = guiLeft + 8;
+        int slotsStartX = slotAreaX + 4;
+        int slotsStartY = slotAreaY + 4;
 
         for (int i = startIdx; i < endIdx; i++) {
             int localIdx = i - startIdx;
             int col = localIdx % COLUMNS;
             int row = localIdx / COLUMNS;
 
-            int x = shopAreaX + col * (SHOP_SIZE + SHOP_SPACING);
-            int y = shopAreaY + row * (SHOP_SIZE + SHOP_SPACING + 12);
+            int x = slotsStartX + col * (SLOT_SIZE + SLOT_SPACING);
+            int y = slotsStartY + row * (SLOT_SIZE + SLOT_SPACING + 10);
 
             SyncShopsPacket.ShopData shop = shops.get(i);
-            renderShopEntry(graphics, shop, x, y, mouseX, mouseY);
+            renderShopSlot(graphics, shop, x, y, mouseX, mouseY);
         }
 
-        // Page indicator (above the buttons)
+        // Page indicator
         int maxPages = Math.max(1, getMaxPages());
         String pageText = "Page " + (page + 1) + "/" + maxPages;
-        graphics.drawCenteredString(this.font, pageText, guiLeft + guiWidth / 2, guiTop + guiHeight - 36, 0xAAAAAA);
+        graphics.drawCenteredString(this.font, pageText, guiLeft + guiWidth / 2, guiTop + guiHeight - 34, 0x404040);
 
         // No shops message
         if (shops.isEmpty()) {
-            graphics.drawCenteredString(this.font, "No shops found!", guiLeft + guiWidth / 2, guiTop + 80, 0xFF5555);
-            graphics.drawCenteredString(this.font, "Click + to create one", guiLeft + guiWidth / 2, guiTop + 95, 0xAAAAAA);
+            graphics.drawCenteredString(this.font, "No shops found!", guiLeft + guiWidth / 2, slotAreaY + 30, 0x404040);
+            graphics.drawCenteredString(this.font, "Click '+ New Shop' to create one", guiLeft + guiWidth / 2, slotAreaY + 42, 0x606060);
         }
 
         // Tooltips
@@ -165,84 +168,75 @@ public class ShopBrowserScreen extends Screen {
             int col = localIdx % COLUMNS;
             int row = localIdx / COLUMNS;
 
-            int x = shopAreaX + col * (SHOP_SIZE + SHOP_SPACING);
-            int y = shopAreaY + row * (SHOP_SIZE + SHOP_SPACING + 12);
+            int x = slotsStartX + col * (SLOT_SIZE + SLOT_SPACING);
+            int y = slotsStartY + row * (SLOT_SIZE + SLOT_SPACING + 10);
 
-            if (mouseX >= x && mouseX < x + SHOP_SIZE && mouseY >= y && mouseY < y + SHOP_SIZE) {
+            if (mouseX >= x && mouseX < x + SLOT_SIZE && mouseY >= y && mouseY < y + SLOT_SIZE) {
                 SyncShopsPacket.ShopData shop = shops.get(i);
                 renderShopTooltip(graphics, shop, mouseX, mouseY);
             }
         }
     }
 
-    private void renderShopEntry(GuiGraphics graphics, SyncShopsPacket.ShopData shop, int x, int y, int mouseX, int mouseY) {
-        boolean hovered = mouseX >= x && mouseX < x + SHOP_SIZE && mouseY >= y && mouseY < y + SHOP_SIZE;
+    private void renderShopSlot(GuiGraphics graphics, SyncShopsPacket.ShopData shop, int x, int y, int mouseX, int mouseY) {
+        boolean hovered = mouseX >= x && mouseX < x + SLOT_SIZE && mouseY >= y && mouseY < y + SLOT_SIZE;
 
-        // Background
-        int bgColor = hovered ? 0xFF444444 : 0xFF333333;
+        // Slot background (vanilla style)
+        graphics.fill(x, y, x + SLOT_SIZE, y + SLOT_SIZE, 0xFF8B8B8B);
+        graphics.fill(x, y, x + SLOT_SIZE, y + 1, 0xFF373737);
+        graphics.fill(x, y, x + 1, y + SLOT_SIZE, 0xFF373737);
+        graphics.fill(x + 1, y + SLOT_SIZE - 1, x + SLOT_SIZE, y + SLOT_SIZE, 0xFFFFFFFF);
+        graphics.fill(x + SLOT_SIZE - 1, y + 1, x + SLOT_SIZE, y + SLOT_SIZE - 1, 0xFFFFFFFF);
+
+        // Inner slot
+        int innerColor = hovered ? 0xFFAAAAAA : 0xFF8B8B8B;
+        graphics.fill(x + 1, y + 1, x + SLOT_SIZE - 1, y + SLOT_SIZE - 1, innerColor);
+
+        // Render player head as item
+        ItemStack headStack = new ItemStack(Items.PLAYER_HEAD);
+        graphics.renderItem(headStack, x + 1, y + 1);
+
+        // Favorite indicator
         if (ClientShopData.isFavorite(shop.shopId())) {
-            bgColor = hovered ? 0xFF554400 : 0xFF443300;
+            graphics.fill(x + SLOT_SIZE - 4, y + 1, x + SLOT_SIZE - 1, y + 4, 0xFFFFAA00);
         }
+
+        // Featured indicator
         if (shop.featured()) {
-            bgColor = hovered ? 0xFF004444 : 0xFF003333;
+            graphics.fill(x + 1, y + 1, x + 4, y + 4, 0xFF00AAAA);
         }
-        graphics.fill(x, y, x + SHOP_SIZE, y + SHOP_SIZE, bgColor);
-
-        // Border
-        int borderColor = shop.featured() ? 0xFF00AAAA : (ClientShopData.isFavorite(shop.shopId()) ? 0xFFFFAA00 : 0xFF555555);
-        graphics.fill(x, y, x + SHOP_SIZE, y + 1, borderColor);
-        graphics.fill(x, y + SHOP_SIZE - 1, x + SHOP_SIZE, y + SHOP_SIZE, borderColor);
-        graphics.fill(x, y, x + 1, y + SHOP_SIZE, borderColor);
-        graphics.fill(x + SHOP_SIZE - 1, y, x + SHOP_SIZE, y + SHOP_SIZE, borderColor);
-
-        // Player head
-        renderPlayerHead(graphics, shop.ownerUUID(), shop.ownerName(), x + 4, y + 4, 16);
 
         // Shop name below
         String name = shop.shopName();
-        if (name.length() > 6) {
-            name = name.substring(0, 5) + "..";
+        if (font.width(name) > SLOT_SIZE + 4) {
+            name = font.plainSubstrByWidth(name, SLOT_SIZE) + "..";
         }
-        graphics.drawCenteredString(this.font, name, x + SHOP_SIZE / 2, y + SHOP_SIZE + 2, 0xCCCCCC);
-    }
-
-    private void renderPlayerHead(GuiGraphics graphics, UUID playerUUID, String playerName, int x, int y, int size) {
-        try {
-            GameProfile profile = new GameProfile(playerUUID, playerName);
-            PlayerSkin skin = minecraft.getSkinManager().getInsecureSkin(profile);
-            // Draw player face (8x8 from skin texture at position 8,8)
-            graphics.blit(skin.texture(), x, y, size, size, 8.0f, 8.0f, 8, 8, 64, 64);
-            // Hat layer (8x8 from skin texture at position 40,8)
-            graphics.blit(skin.texture(), x, y, size, size, 40.0f, 8.0f, 8, 8, 64, 64);
-        } catch (Exception e) {
-            // Fallback: draw a placeholder
-            graphics.fill(x, y, x + size, y + size, 0xFF8B4513);
-        }
+        graphics.drawCenteredString(this.font, name, x + SLOT_SIZE / 2, y + SLOT_SIZE + 1, 0x404040);
     }
 
     private void renderShopTooltip(GuiGraphics graphics, SyncShopsPacket.ShopData shop, int mouseX, int mouseY) {
         List<Component> tooltip = new java.util.ArrayList<>();
         tooltip.add(Component.literal(shop.shopName()).withStyle(style -> style.withBold(true)));
-        tooltip.add(Component.literal("by " + shop.ownerName()).withStyle(style -> style.withColor(0xAAAAAA)));
+        tooltip.add(Component.literal("Owner: " + shop.ownerName()).withStyle(style -> style.withColor(0x555555)));
 
         if (!shop.description().isEmpty()) {
-            tooltip.add(Component.literal(shop.description()).withStyle(style -> style.withColor(0x888888).withItalic(true)));
+            tooltip.add(Component.literal(shop.description()).withStyle(style -> style.withColor(0x555555).withItalic(true)));
         }
 
         tooltip.add(Component.empty());
-        tooltip.add(Component.literal("Items: " + shop.items().size()).withStyle(style -> style.withColor(0xFFFF55)));
-        tooltip.add(Component.literal("Sales: " + shop.totalSales()).withStyle(style -> style.withColor(0x55FF55)));
+        tooltip.add(Component.literal("Items: " + shop.items().size()).withStyle(style -> style.withColor(0xAA5500)));
+        tooltip.add(Component.literal("Sales: " + shop.totalSales()).withStyle(style -> style.withColor(0x00AA00)));
 
         if (shop.featured()) {
-            tooltip.add(Component.literal("FEATURED").withStyle(style -> style.withColor(0x55FFFF).withBold(true)));
+            tooltip.add(Component.literal("FEATURED").withStyle(style -> style.withColor(0x00AAAA).withBold(true)));
         }
         if (ClientShopData.isFavorite(shop.shopId())) {
             tooltip.add(Component.literal("Favorited").withStyle(style -> style.withColor(0xFFAA00)));
         }
 
         tooltip.add(Component.empty());
-        tooltip.add(Component.literal("Click to view shop").withStyle(style -> style.withColor(0x777777)));
-        tooltip.add(Component.literal("Shift+Click to favorite").withStyle(style -> style.withColor(0x777777)));
+        tooltip.add(Component.literal("Click to view").withStyle(style -> style.withColor(0x555555)));
+        tooltip.add(Component.literal("Shift+Click to favorite").withStyle(style -> style.withColor(0x555555)));
 
         graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
     }
@@ -257,25 +251,25 @@ public class ShopBrowserScreen extends Screen {
         int startIdx = page * SHOPS_PER_PAGE;
         int endIdx = Math.min(startIdx + SHOPS_PER_PAGE, shops.size());
 
-        int shopAreaY = guiTop + 42;
-        int shopAreaX = guiLeft + 8;
+        int slotAreaX = guiLeft + 8;
+        int slotAreaY = guiTop + 34;
+        int slotsStartX = slotAreaX + 4;
+        int slotsStartY = slotAreaY + 4;
 
         for (int i = startIdx; i < endIdx; i++) {
             int localIdx = i - startIdx;
             int col = localIdx % COLUMNS;
             int row = localIdx / COLUMNS;
 
-            int x = shopAreaX + col * (SHOP_SIZE + SHOP_SPACING);
-            int y = shopAreaY + row * (SHOP_SIZE + SHOP_SPACING + 12);
+            int x = slotsStartX + col * (SLOT_SIZE + SLOT_SPACING);
+            int y = slotsStartY + row * (SLOT_SIZE + SLOT_SPACING + 10);
 
-            if (mouseX >= x && mouseX < x + SHOP_SIZE && mouseY >= y && mouseY < y + SHOP_SIZE) {
+            if (mouseX >= x && mouseX < x + SLOT_SIZE && mouseY >= y && mouseY < y + SLOT_SIZE) {
                 SyncShopsPacket.ShopData shop = shops.get(i);
 
                 if (hasShiftDown()) {
-                    // Toggle favorite
                     NetworkHandler.sendToServer(new ToggleFavoritePacket(shop.shopId()));
                 } else {
-                    // Open shop view
                     minecraft.setScreen(new ShopViewScreen(this, shop));
                 }
                 return true;

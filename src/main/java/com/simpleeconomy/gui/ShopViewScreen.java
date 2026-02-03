@@ -20,16 +20,15 @@ public class ShopViewScreen extends Screen {
     private final SyncShopsPacket.ShopData shop;
     private final boolean isOwner;
 
-    private static final int ITEMS_PER_PAGE = 21; // 7 columns x 3 rows
-    private static final int COLUMNS = 7;
-    private static final int SLOT_SIZE = 24;
-    private static final int SLOT_SPACING = 4;
+    private static final int ITEMS_PER_PAGE = 27;
+    private static final int COLUMNS = 9;
+    private static final int SLOT_SIZE = 18;
 
     private int page = 0;
     private int guiLeft;
     private int guiTop;
-    private int guiWidth = 256;
-    private int guiHeight = 200;
+    private int guiWidth = 176;
+    private int guiHeight = 166;
 
     private Button prevButton;
     private Button nextButton;
@@ -55,91 +54,109 @@ public class ShopViewScreen extends Screen {
         guiTop = (this.height - guiHeight) / 2;
 
         // Back button
-        backButton = Button.builder(Component.literal("< Back"), btn -> {
+        backButton = Button.builder(Component.literal("Back"), btn -> {
             minecraft.setScreen(parent);
-        }).bounds(guiLeft + 8, guiTop + guiHeight - 24, 50, 20).build();
+        }).bounds(guiLeft + 8, guiTop + guiHeight - 22, 35, 16).build();
         this.addRenderableWidget(backButton);
 
         // Navigation
         prevButton = Button.builder(Component.literal("<"), btn -> {
             if (page > 0) page--;
-        }).bounds(guiLeft + 62, guiTop + guiHeight - 24, 20, 20).build();
+        }).bounds(guiLeft + 46, guiTop + guiHeight - 22, 16, 16).build();
         this.addRenderableWidget(prevButton);
 
         nextButton = Button.builder(Component.literal(">"), btn -> {
             int maxPages = getMaxPages();
             if (page < maxPages - 1) page++;
-        }).bounds(guiLeft + guiWidth - 28, guiTop + guiHeight - 24, 20, 20).build();
+        }).bounds(guiLeft + guiWidth - 62, guiTop + guiHeight - 22, 16, 16).build();
         this.addRenderableWidget(nextButton);
 
         // Favorite button (for non-owners)
         if (!isOwner) {
-            String favText = ClientShopData.isFavorite(shop.shopId()) ? "Unfavorite" : "Favorite";
+            String favText = ClientShopData.isFavorite(shop.shopId()) ? "Unfav" : "Fav";
             favoriteButton = Button.builder(Component.literal(favText), btn -> {
                 NetworkHandler.sendToServer(new ToggleFavoritePacket(shop.shopId()));
                 minecraft.setScreen(parent);
-            }).bounds(guiLeft + guiWidth - 70, guiTop + guiHeight - 24, 60, 20).build();
+            }).bounds(guiLeft + guiWidth - 43, guiTop + guiHeight - 22, 35, 16).build();
             this.addRenderableWidget(favoriteButton);
         }
 
         // Owner controls
         if (isOwner) {
-            addItemButton = Button.builder(Component.literal("+"), btn -> {
+            addItemButton = Button.builder(Component.literal("+ Add"), btn -> {
                 minecraft.setScreen(new AddItemScreen(this, shop.shopId()));
-            }).bounds(guiLeft + guiWidth / 2 - 10, guiTop + guiHeight - 24, 20, 20).build();
+            }).bounds(guiLeft + guiWidth / 2 - 20, guiTop + guiHeight - 22, 40, 16).build();
             this.addRenderableWidget(addItemButton);
 
             editShopButton = Button.builder(Component.literal("Edit"), btn -> {
                 minecraft.setScreen(new EditShopScreen(parent, shop));
-            }).bounds(guiLeft + guiWidth - 90, guiTop + guiHeight - 24, 40, 20).build();
+            }).bounds(guiLeft + guiWidth - 63, guiTop + guiHeight - 22, 30, 16).build();
             this.addRenderableWidget(editShopButton);
 
             deleteShopButton = Button.builder(Component.literal("X"), btn -> {
                 minecraft.setScreen(new ConfirmDeleteScreen(parent, shop));
-            }).bounds(guiLeft + guiWidth - 45, guiTop + guiHeight - 24, 20, 20).build();
+            }).bounds(guiLeft + guiWidth - 30, guiTop + guiHeight - 22, 20, 16).build();
             this.addRenderableWidget(deleteShopButton);
         }
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // Background
-        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xCC000000);
-        graphics.fill(guiLeft + 1, guiTop + 1, guiLeft + guiWidth - 1, guiTop + guiHeight - 1, 0xCC222222);
+        this.renderBackground(graphics, mouseX, mouseY, partialTick);
+
+        // Container background
+        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xFFC6C6C6);
+        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + 1, 0xFFFFFFFF);
+        graphics.fill(guiLeft, guiTop + 1, guiLeft + 1, guiTop + guiHeight, 0xFFFFFFFF);
+        graphics.fill(guiLeft, guiTop + guiHeight - 1, guiLeft + guiWidth, guiTop + guiHeight, 0xFF555555);
+        graphics.fill(guiLeft + guiWidth - 1, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xFF555555);
+        graphics.fill(guiLeft + 1, guiTop + 1, guiLeft + guiWidth - 1, guiTop + 2, 0xFFDBDBDB);
+        graphics.fill(guiLeft + 1, guiTop + 2, guiLeft + 2, guiTop + guiHeight - 1, 0xFFDBDBDB);
 
         // Title
-        graphics.drawCenteredString(this.font, shop.shopName(), guiLeft + guiWidth / 2, guiTop + 6, 0xFFFFFF);
+        String title = shop.shopName();
+        if (font.width(title) > guiWidth - 16) {
+            title = font.plainSubstrByWidth(title, guiWidth - 20) + "...";
+        }
+        graphics.drawString(this.font, title, guiLeft + 8, guiTop + 6, 0x404040, false);
 
         // Owner and stats
-        graphics.drawString(this.font, "by " + shop.ownerName(), guiLeft + 8, guiTop + 20, 0xAAAAAA);
-        graphics.drawString(this.font, "Sales: " + shop.totalSales(), guiLeft + 8, guiTop + 32, 0x55FF55);
+        graphics.drawString(this.font, "by " + shop.ownerName(), guiLeft + 8, guiTop + 18, 0x606060, false);
 
         // Balance
         String balanceText = EconomyManager.formatBalance(ClientShopData.getBalance()) + " coins";
-        graphics.drawString(this.font, balanceText, guiLeft + guiWidth - font.width(balanceText) - 8, guiTop + 6, 0xFFD700);
-
-        // Description
-        if (!shop.description().isEmpty()) {
-            graphics.drawString(this.font, shop.description(), guiLeft + guiWidth / 2 - font.width(shop.description()) / 2, guiTop + 20, 0x888888);
-        }
+        graphics.drawString(this.font, balanceText, guiLeft + guiWidth - font.width(balanceText) - 8, guiTop + 6, 0x404040, false);
 
         super.render(graphics, mouseX, mouseY, partialTick);
+
+        // Items area
+        int slotAreaX = guiLeft + 8;
+        int slotAreaY = guiTop + 32;
+        int slotAreaWidth = guiWidth - 16;
+        int slotAreaHeight = 54;
+
+        // Dark slot area
+        graphics.fill(slotAreaX, slotAreaY, slotAreaX + slotAreaWidth, slotAreaY + slotAreaHeight, 0xFF8B8B8B);
+        graphics.fill(slotAreaX, slotAreaY, slotAreaX + slotAreaWidth, slotAreaY + 1, 0xFF373737);
+        graphics.fill(slotAreaX, slotAreaY, slotAreaX + 1, slotAreaY + slotAreaHeight, 0xFF373737);
+        graphics.fill(slotAreaX + 1, slotAreaY + slotAreaHeight - 1, slotAreaX + slotAreaWidth, slotAreaY + slotAreaHeight, 0xFFFFFFFF);
+        graphics.fill(slotAreaX + slotAreaWidth - 1, slotAreaY + 1, slotAreaX + slotAreaWidth, slotAreaY + slotAreaHeight - 1, 0xFFFFFFFF);
 
         // Render items
         List<SyncShopsPacket.ItemData> items = shop.items();
         int startIdx = page * ITEMS_PER_PAGE;
         int endIdx = Math.min(startIdx + ITEMS_PER_PAGE, items.size());
 
-        int itemAreaY = guiTop + 48;
-        int itemAreaX = guiLeft + 8;
+        int slotsStartX = slotAreaX + 1;
+        int slotsStartY = slotAreaY + 1;
 
         for (int i = startIdx; i < endIdx; i++) {
             int localIdx = i - startIdx;
             int col = localIdx % COLUMNS;
             int row = localIdx / COLUMNS;
 
-            int x = itemAreaX + col * (SLOT_SIZE + SLOT_SPACING);
-            int y = itemAreaY + row * (SLOT_SIZE + SLOT_SPACING);
+            int x = slotsStartX + col * SLOT_SIZE;
+            int y = slotsStartY + row * SLOT_SIZE;
 
             SyncShopsPacket.ItemData item = items.get(i);
             renderItemSlot(graphics, item, x, y, mouseX, mouseY);
@@ -148,17 +165,22 @@ public class ShopViewScreen extends Screen {
         // Empty shop message
         if (items.isEmpty()) {
             if (isOwner) {
-                graphics.drawCenteredString(this.font, "Your shop is empty!", guiLeft + guiWidth / 2, guiTop + 80, 0xFF5555);
-                graphics.drawCenteredString(this.font, "Click + to add items", guiLeft + guiWidth / 2, guiTop + 95, 0xAAAAAA);
+                graphics.drawCenteredString(this.font, "Your shop is empty!", guiLeft + guiWidth / 2, slotAreaY + 18, 0x404040);
+                graphics.drawCenteredString(this.font, "Click '+ Add' to add items", guiLeft + guiWidth / 2, slotAreaY + 30, 0x606060);
             } else {
-                graphics.drawCenteredString(this.font, "This shop is empty", guiLeft + guiWidth / 2, guiTop + 80, 0xAAAAAA);
+                graphics.drawCenteredString(this.font, "This shop is empty", guiLeft + guiWidth / 2, slotAreaY + 24, 0x606060);
             }
         }
+
+        // Stats area
+        int statsY = slotAreaY + slotAreaHeight + 4;
+        graphics.drawString(this.font, "Items: " + items.size(), guiLeft + 8, statsY, 0x404040, false);
+        graphics.drawString(this.font, "Sales: " + shop.totalSales(), guiLeft + 70, statsY, 0x404040, false);
 
         // Page indicator
         int maxPages = Math.max(1, getMaxPages());
         String pageText = "Page " + (page + 1) + "/" + maxPages;
-        graphics.drawCenteredString(this.font, pageText, guiLeft + guiWidth / 2, guiTop + guiHeight - 36, 0xAAAAAA);
+        graphics.drawCenteredString(this.font, pageText, guiLeft + guiWidth / 2, guiTop + guiHeight - 34, 0x404040);
 
         // Tooltips
         for (int i = startIdx; i < endIdx; i++) {
@@ -166,8 +188,8 @@ public class ShopViewScreen extends Screen {
             int col = localIdx % COLUMNS;
             int row = localIdx / COLUMNS;
 
-            int x = itemAreaX + col * (SLOT_SIZE + SLOT_SPACING);
-            int y = itemAreaY + row * (SLOT_SIZE + SLOT_SPACING);
+            int x = slotsStartX + col * SLOT_SIZE;
+            int y = slotsStartY + row * SLOT_SIZE;
 
             if (mouseX >= x && mouseX < x + SLOT_SIZE && mouseY >= y && mouseY < y + SLOT_SIZE) {
                 SyncShopsPacket.ItemData item = items.get(i);
@@ -180,24 +202,17 @@ public class ShopViewScreen extends Screen {
         boolean hovered = mouseX >= x && mouseX < x + SLOT_SIZE && mouseY >= y && mouseY < y + SLOT_SIZE;
         boolean outOfStock = item.stock() <= 0;
 
-        // Background
-        int bgColor = outOfStock ? 0xFF442222 : (hovered ? 0xFF444444 : 0xFF333333);
+        // Slot background
+        int bgColor = outOfStock ? 0xFF5B3B3B : (hovered ? 0xFFAAAAAA : 0xFF8B8B8B);
         graphics.fill(x, y, x + SLOT_SIZE, y + SLOT_SIZE, bgColor);
 
-        // Border
-        int borderColor = outOfStock ? 0xFF882222 : 0xFF555555;
-        graphics.fill(x, y, x + SLOT_SIZE, y + 1, borderColor);
-        graphics.fill(x, y + SLOT_SIZE - 1, x + SLOT_SIZE, y + SLOT_SIZE, borderColor);
-        graphics.fill(x, y, x + 1, y + SLOT_SIZE, borderColor);
-        graphics.fill(x + SLOT_SIZE - 1, y, x + SLOT_SIZE, y + SLOT_SIZE, borderColor);
-
         // Item
-        graphics.renderItem(item.itemStack(), x + 4, y + 4);
-        graphics.renderItemDecorations(this.font, item.itemStack(), x + 4, y + 4);
+        graphics.renderItem(item.itemStack(), x + 1, y + 1);
+        graphics.renderItemDecorations(this.font, item.itemStack(), x + 1, y + 1);
 
-        // Stock indicator
+        // Out of stock overlay
         if (outOfStock) {
-            graphics.drawCenteredString(this.font, "X", x + SLOT_SIZE / 2, y + SLOT_SIZE / 2 - 4, 0xFF5555);
+            graphics.fill(x + 1, y + 1, x + SLOT_SIZE - 1, y + SLOT_SIZE - 1, 0x80FF0000);
         }
     }
 
@@ -209,25 +224,24 @@ public class ShopViewScreen extends Screen {
 
         tooltip.add(Component.empty());
         tooltip.add(Component.literal("Price: " + EconomyManager.formatBalance(item.price()) + " coins")
-            .withStyle(style -> style.withColor(0xFFD700)));
+            .withStyle(style -> style.withColor(0xFFAA00)));
 
         if (item.itemStack().getCount() > 1) {
             double perItem = item.price() / item.itemStack().getCount();
             tooltip.add(Component.literal("(" + EconomyManager.formatBalance(perItem) + " per item)")
-                .withStyle(style -> style.withColor(0xAAAA00)));
+                .withStyle(style -> style.withColor(0xAA8800)));
         }
 
         tooltip.add(Component.literal("Stock: " + item.stock())
-            .withStyle(style -> style.withColor(item.stock() > 0 ? 0x55FF55 : 0xFF5555)));
+            .withStyle(style -> style.withColor(item.stock() > 0 ? 0x00AA00 : 0xAA0000)));
 
         tooltip.add(Component.empty());
         if (isOwner) {
-            tooltip.add(Component.literal("Click to remove from shop").withStyle(style -> style.withColor(0x777777)));
+            tooltip.add(Component.literal("Click to remove from shop").withStyle(style -> style.withColor(0x555555)));
         } else if (item.stock() > 0) {
-            tooltip.add(Component.literal("Click to buy").withStyle(style -> style.withColor(0x777777)));
-            tooltip.add(Component.literal("Shift+Click to buy stack").withStyle(style -> style.withColor(0x777777)));
+            tooltip.add(Component.literal("Click to buy").withStyle(style -> style.withColor(0x555555)));
         } else {
-            tooltip.add(Component.literal("Out of stock!").withStyle(style -> style.withColor(0xFF5555)));
+            tooltip.add(Component.literal("Out of stock!").withStyle(style -> style.withColor(0xAA0000)));
         }
 
         graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
@@ -243,28 +257,27 @@ public class ShopViewScreen extends Screen {
         int startIdx = page * ITEMS_PER_PAGE;
         int endIdx = Math.min(startIdx + ITEMS_PER_PAGE, items.size());
 
-        int itemAreaY = guiTop + 48;
-        int itemAreaX = guiLeft + 8;
+        int slotAreaX = guiLeft + 8;
+        int slotAreaY = guiTop + 32;
+        int slotsStartX = slotAreaX + 1;
+        int slotsStartY = slotAreaY + 1;
 
         for (int i = startIdx; i < endIdx; i++) {
             int localIdx = i - startIdx;
             int col = localIdx % COLUMNS;
             int row = localIdx / COLUMNS;
 
-            int x = itemAreaX + col * (SLOT_SIZE + SLOT_SPACING);
-            int y = itemAreaY + row * (SLOT_SIZE + SLOT_SPACING);
+            int x = slotsStartX + col * SLOT_SIZE;
+            int y = slotsStartY + row * SLOT_SIZE;
 
             if (mouseX >= x && mouseX < x + SLOT_SIZE && mouseY >= y && mouseY < y + SLOT_SIZE) {
                 SyncShopsPacket.ItemData item = items.get(i);
 
                 if (isOwner) {
-                    // Remove item from shop
                     NetworkHandler.sendToServer(new RemoveShopItemPacket(shop.shopId(), item.itemId()));
                     minecraft.setScreen(parent);
                 } else if (item.stock() > 0) {
-                    // Purchase
-                    int quantity = hasShiftDown() ? Math.min(item.stock(), 64 / item.itemStack().getCount()) : 1;
-                    quantity = Math.max(1, quantity);
+                    int quantity = 1;
                     NetworkHandler.sendToServer(new PurchaseItemPacket(shop.shopId(), item.itemId(), quantity));
                     minecraft.setScreen(parent);
                 }

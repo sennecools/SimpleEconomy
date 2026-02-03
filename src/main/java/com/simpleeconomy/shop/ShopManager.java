@@ -69,9 +69,14 @@ public class ShopManager {
             return false;
         }
 
-        ShopItem shopItem = new ShopItem(itemStack, price, itemStack.getCount());
+        // Stock = 1 means this listing can be purchased once
+        // The itemStack contains the quantity of items per purchase
+        ShopItem shopItem = new ShopItem(itemStack, price, 1);
         shop.addItem(shopItem);
         data.setDirty();
+
+        SimpleEconomy.LOGGER.info("Added item to shop: {} x{} for {} coins",
+            itemStack.getDisplayName().getString(), itemStack.getCount(), price);
 
         return true;
     }

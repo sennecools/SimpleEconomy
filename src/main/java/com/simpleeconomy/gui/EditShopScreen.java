@@ -25,8 +25,8 @@ public class EditShopScreen extends Screen {
 
     private int guiLeft;
     private int guiTop;
-    private int guiWidth = 220;
-    private int guiHeight = 150;
+    private int guiWidth = 176;
+    private int guiHeight = 120;
 
     public EditShopScreen(Screen parent, SyncShopsPacket.ShopData shop) {
         super(Component.literal("Edit Shop"));
@@ -43,13 +43,13 @@ public class EditShopScreen extends Screen {
         guiTop = (this.height - guiHeight) / 2;
 
         // Name
-        nameBox = new EditBox(this.font, guiLeft + 10, guiTop + 35, guiWidth - 20, 16, Component.literal("Name"));
+        nameBox = new EditBox(this.font, guiLeft + 8, guiTop + 28, guiWidth - 16, 14, Component.literal("Name"));
         nameBox.setMaxLength(32);
         nameBox.setValue(shop.shopName());
         this.addRenderableWidget(nameBox);
 
         // Description
-        descriptionBox = new EditBox(this.font, guiLeft + 10, guiTop + 65, guiWidth - 20, 16, Component.literal("Description"));
+        descriptionBox = new EditBox(this.font, guiLeft + 8, guiTop + 56, guiWidth - 16, 14, Component.literal("Description"));
         descriptionBox.setMaxLength(256);
         descriptionBox.setValue(shop.description());
         this.addRenderableWidget(descriptionBox);
@@ -60,7 +60,7 @@ public class EditShopScreen extends Screen {
             int nextIdx = (selectedCategory.ordinal() + 1) % categories.length;
             selectedCategory = categories[nextIdx];
             btn.setMessage(Component.literal(selectedCategory.getDisplayName()));
-        }).bounds(guiLeft + 70, guiTop + 90, 100, 20).build();
+        }).bounds(guiLeft + 60, guiTop + 76, 80, 16).build();
         this.addRenderableWidget(categoryButton);
 
         // Save
@@ -75,13 +75,13 @@ public class EditShopScreen extends Screen {
                 ));
                 minecraft.setScreen(parent);
             }
-        }).bounds(guiLeft + 10, guiTop + 120, 95, 20).build();
+        }).bounds(guiLeft + 8, guiTop + 96, 76, 18).build();
         this.addRenderableWidget(saveButton);
 
         // Cancel
         cancelButton = Button.builder(Component.literal("Cancel"), btn -> {
             minecraft.setScreen(parent);
-        }).bounds(guiLeft + guiWidth - 105, guiTop + 120, 95, 20).build();
+        }).bounds(guiLeft + guiWidth - 84, guiTop + 96, 76, 18).build();
         this.addRenderableWidget(cancelButton);
 
         setInitialFocus(nameBox);
@@ -89,17 +89,22 @@ public class EditShopScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // Background
-        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xCC000000);
-        graphics.fill(guiLeft + 1, guiTop + 1, guiLeft + guiWidth - 1, guiTop + guiHeight - 1, 0xCC222222);
+        this.renderBackground(graphics, mouseX, mouseY, partialTick);
+
+        // Container background
+        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xFFC6C6C6);
+        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + 1, 0xFFFFFFFF);
+        graphics.fill(guiLeft, guiTop + 1, guiLeft + 1, guiTop + guiHeight, 0xFFFFFFFF);
+        graphics.fill(guiLeft, guiTop + guiHeight - 1, guiLeft + guiWidth, guiTop + guiHeight, 0xFF555555);
+        graphics.fill(guiLeft + guiWidth - 1, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xFF555555);
 
         // Title
-        graphics.drawCenteredString(this.font, "Edit Shop", guiLeft + guiWidth / 2, guiTop + 8, 0xFFFFFF);
+        graphics.drawString(this.font, "Edit Shop", guiLeft + 8, guiTop + 6, 0x404040, false);
 
         // Labels
-        graphics.drawString(this.font, "Name:", guiLeft + 10, guiTop + 25, 0xAAAAAA);
-        graphics.drawString(this.font, "Description:", guiLeft + 10, guiTop + 55, 0xAAAAAA);
-        graphics.drawString(this.font, "Category:", guiLeft + 10, guiTop + 95, 0xAAAAAA);
+        graphics.drawString(this.font, "Name:", guiLeft + 8, guiTop + 18, 0x404040, false);
+        graphics.drawString(this.font, "Description:", guiLeft + 8, guiTop + 46, 0x404040, false);
+        graphics.drawString(this.font, "Category:", guiLeft + 8, guiTop + 78, 0x404040, false);
 
         super.render(graphics, mouseX, mouseY, partialTick);
     }

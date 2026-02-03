@@ -15,8 +15,8 @@ public class ConfirmDeleteScreen extends Screen {
 
     private int guiLeft;
     private int guiTop;
-    private int guiWidth = 200;
-    private int guiHeight = 100;
+    private int guiWidth = 176;
+    private int guiHeight = 80;
 
     public ConfirmDeleteScreen(Screen parent, SyncShopsPacket.ShopData shop) {
         super(Component.literal("Delete Shop"));
@@ -35,27 +35,37 @@ public class ConfirmDeleteScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Delete"), btn -> {
             NetworkHandler.sendToServer(new DeleteShopPacket(shop.shopId()));
             minecraft.setScreen(parent);
-        }).bounds(guiLeft + 10, guiTop + 65, 85, 20).build());
+        }).bounds(guiLeft + 8, guiTop + 54, 76, 18).build());
 
         // Cancel button
         this.addRenderableWidget(Button.builder(Component.literal("Cancel"), btn -> {
             minecraft.setScreen(parent);
-        }).bounds(guiLeft + guiWidth - 95, guiTop + 65, 85, 20).build());
+        }).bounds(guiLeft + guiWidth - 84, guiTop + 54, 76, 18).build());
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // Background
-        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xCC000000);
-        graphics.fill(guiLeft + 1, guiTop + 1, guiLeft + guiWidth - 1, guiTop + guiHeight - 1, 0xCC442222);
+        this.renderBackground(graphics, mouseX, mouseY, partialTick);
+
+        // Container background (reddish tint)
+        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xFFD6C6C6);
+        graphics.fill(guiLeft, guiTop, guiLeft + guiWidth, guiTop + 1, 0xFFFFFFFF);
+        graphics.fill(guiLeft, guiTop + 1, guiLeft + 1, guiTop + guiHeight, 0xFFFFFFFF);
+        graphics.fill(guiLeft, guiTop + guiHeight - 1, guiLeft + guiWidth, guiTop + guiHeight, 0xFF555555);
+        graphics.fill(guiLeft + guiWidth - 1, guiTop, guiLeft + guiWidth, guiTop + guiHeight, 0xFF555555);
 
         // Title
-        graphics.drawCenteredString(this.font, "Delete Shop?", guiLeft + guiWidth / 2, guiTop + 10, 0xFF5555);
+        graphics.drawString(this.font, "Delete Shop?", guiLeft + 8, guiTop + 6, 0xAA0000, false);
 
         // Warning text
-        graphics.drawCenteredString(this.font, "Are you sure you want to delete", guiLeft + guiWidth / 2, guiTop + 28, 0xFFFFFF);
-        graphics.drawCenteredString(this.font, "\"" + shop.shopName() + "\"?", guiLeft + guiWidth / 2, guiTop + 40, 0xFFD700);
-        graphics.drawCenteredString(this.font, "This cannot be undone!", guiLeft + guiWidth / 2, guiTop + 52, 0xFF5555);
+        graphics.drawCenteredString(this.font, "Are you sure you want to delete", guiLeft + guiWidth / 2, guiTop + 20, 0x404040);
+
+        String shopName = shop.shopName();
+        if (font.width(shopName) > guiWidth - 20) {
+            shopName = font.plainSubstrByWidth(shopName, guiWidth - 24) + "...";
+        }
+        graphics.drawCenteredString(this.font, "\"" + shopName + "\"?", guiLeft + guiWidth / 2, guiTop + 32, 0x404040);
+        graphics.drawCenteredString(this.font, "This cannot be undone!", guiLeft + guiWidth / 2, guiTop + 44, 0xAA0000);
 
         super.render(graphics, mouseX, mouseY, partialTick);
     }
