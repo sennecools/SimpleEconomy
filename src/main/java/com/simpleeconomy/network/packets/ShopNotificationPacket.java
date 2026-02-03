@@ -9,7 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record ShopNotificationPacket(NotificationType type, String message) implements CustomPacketPayload {
+public record ShopNotificationPacket(NotificationType notificationType, String message) implements CustomPacketPayload {
 
     public static final Type<ShopNotificationPacket> TYPE =
         new Type<>(ResourceLocation.fromNamespaceAndPath(SimpleEconomy.MOD_ID, "shop_notification"));
@@ -26,7 +26,7 @@ public record ShopNotificationPacket(NotificationType type, String message) impl
 
             @Override
             public void encode(RegistryFriendlyByteBuf buf, ShopNotificationPacket packet) {
-                buf.writeVarInt(packet.type.ordinal());
+                buf.writeVarInt(packet.notificationType.ordinal());
                 buf.writeUtf(packet.message);
             }
         };

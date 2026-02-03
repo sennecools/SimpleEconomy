@@ -210,9 +210,10 @@ public class ShopBrowserScreen extends Screen {
         try {
             GameProfile profile = new GameProfile(playerUUID, playerName);
             PlayerSkin skin = minecraft.getSkinManager().getInsecureSkin(profile);
-            graphics.blit(x, y, size, size, 8, 8, 8, 8, 64, 64, skin.texture());
-            // Hat layer
-            graphics.blit(x, y, size, size, 40, 8, 8, 8, 64, 64, skin.texture());
+            // Draw player face (8x8 from skin texture at position 8,8)
+            graphics.blit(skin.texture(), x, y, size, size, 8.0f, 8.0f, 8, 8, 64, 64);
+            // Hat layer (8x8 from skin texture at position 40,8)
+            graphics.blit(skin.texture(), x, y, size, size, 40.0f, 8.0f, 8, 8, 64, 64);
         } catch (Exception e) {
             // Fallback: draw a placeholder
             graphics.fill(x, y, x + size, y + size, 0xFF8B4513);
