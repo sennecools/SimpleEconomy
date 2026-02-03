@@ -44,11 +44,19 @@ A simple economy and player shop system for Minecraft NeoForge 1.21.1.
 
 ## Building
 
+**Requirements:** Java 21 (required by NeoForge 1.21.1)
+
 ```bash
+# Make sure JAVA_HOME points to Java 21
+export JAVA_HOME=/path/to/java21
+
+# Build the mod
 ./gradlew build
 ```
 
 The built jar will be in `build/libs/`.
+
+**Note:** If you have a newer Java version (22+), you'll need to install Java 21 specifically for building NeoForge mods.
 
 ## For Modpack Makers
 
