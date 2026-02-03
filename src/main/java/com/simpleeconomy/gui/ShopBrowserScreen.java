@@ -148,10 +148,10 @@ public class ShopBrowserScreen extends Screen {
             renderShopEntry(graphics, shop, x, y, mouseX, mouseY);
         }
 
-        // Page indicator
+        // Page indicator (above the buttons)
         int maxPages = Math.max(1, getMaxPages());
         String pageText = "Page " + (page + 1) + "/" + maxPages;
-        graphics.drawCenteredString(this.font, pageText, guiLeft + guiWidth / 2, guiTop + guiHeight - 18, 0xAAAAAA);
+        graphics.drawCenteredString(this.font, pageText, guiLeft + guiWidth / 2, guiTop + guiHeight - 36, 0xAAAAAA);
 
         // No shops message
         if (shops.isEmpty()) {
