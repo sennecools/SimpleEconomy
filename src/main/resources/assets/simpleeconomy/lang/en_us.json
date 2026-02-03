@@ -1,0 +1,42 @@
+{
+  "itemGroup.simpleeconomy": "Simple Economy",
+
+  "gui.simpleeconomy.shop_browser": "Marketplace",
+  "gui.simpleeconomy.create_shop": "Create Shop",
+  "gui.simpleeconomy.edit_shop": "Edit Shop",
+  "gui.simpleeconomy.add_item": "Add Item",
+  "gui.simpleeconomy.confirm_delete": "Delete Shop?",
+
+  "command.simpleeconomy.balance": "Your balance: %s coins",
+  "command.simpleeconomy.balance_other": "%s's balance: %s coins",
+  "command.simpleeconomy.pay_success": "Sent %s coins to %s",
+  "command.simpleeconomy.pay_received": "Received %s coins from %s",
+  "command.simpleeconomy.pay_insufficient": "Insufficient funds!",
+  "command.simpleeconomy.pay_self": "You cannot pay yourself!",
+
+  "command.simpleeconomy.eco_add": "Added %s coins to %s",
+  "command.simpleeconomy.eco_remove": "Removed %s coins from %s",
+  "command.simpleeconomy.eco_set": "Set %s's balance to %s coins",
+
+  "command.simpleeconomy.shop_created": "Shop '%s' created!",
+  "command.simpleeconomy.shop_limit": "You have reached the maximum number of shops!",
+  "command.simpleeconomy.shop_deleted": "Shop deleted!",
+
+  "message.simpleeconomy.purchase_success": "Purchased for %s coins!",
+  "message.simpleeconomy.sale_notification": "%s bought from your shop! +%s coins",
+  "message.simpleeconomy.item_added": "Item added to shop!",
+  "message.simpleeconomy.item_removed": "Item removed from shop!",
+  "message.simpleeconomy.out_of_stock": "Out of stock!",
+  "message.simpleeconomy.insufficient_funds": "Insufficient funds!",
+
+  "category.simpleeconomy.general": "General",
+  "category.simpleeconomy.tools": "Tools",
+  "category.simpleeconomy.weapons": "Weapons",
+  "category.simpleeconomy.armor": "Armor",
+  "category.simpleeconomy.food": "Food",
+  "category.simpleeconomy.blocks": "Blocks",
+  "category.simpleeconomy.redstone": "Redstone",
+  "category.simpleeconomy.materials": "Materials",
+  "category.simpleeconomy.magic": "Magic",
+  "category.simpleeconomy.modded": "Modded"
+}

@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+*.launch
+.metadata/
+
+# Eclipse
+bin/
+
+# Runtime
+run/
+runs/
+logs/
+
+# Generated
+src/generated/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+local.properties
+repo/
