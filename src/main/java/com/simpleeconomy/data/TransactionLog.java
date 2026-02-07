@@ -184,6 +184,86 @@ public class TransactionLog extends SavedData {
                 null
             );
         }
+
+        public static Transaction startingBalance(double amount) {
+            return new Transaction(
+                TransactionType.STARTING_BALANCE,
+                amount,
+                "Starting balance",
+                System.currentTimeMillis(),
+                null
+            );
+        }
+
+        public static Transaction dailyReward(double amount, int streak) {
+            return new Transaction(
+                TransactionType.DAILY_REWARD,
+                amount,
+                "Daily reward (day " + streak + ")",
+                System.currentTimeMillis(),
+                null
+            );
+        }
+
+        public static Transaction interest(double amount) {
+            return new Transaction(
+                TransactionType.INTEREST,
+                amount,
+                "Weekly interest",
+                System.currentTimeMillis(),
+                null
+            );
+        }
+
+        public static Transaction mobDrop(double amount, String mobName) {
+            return new Transaction(
+                TransactionType.MOB_DROP,
+                amount,
+                "Killed " + mobName,
+                System.currentTimeMillis(),
+                null
+            );
+        }
+
+        public static Transaction coinflipWin(double amount, UUID opponent) {
+            return new Transaction(
+                TransactionType.COINFLIP_WIN,
+                amount,
+                "Coinflip win",
+                System.currentTimeMillis(),
+                opponent
+            );
+        }
+
+        public static Transaction coinflipLoss(double amount, UUID opponent) {
+            return new Transaction(
+                TransactionType.COINFLIP_LOSS,
+                -amount,
+                "Coinflip loss",
+                System.currentTimeMillis(),
+                opponent
+            );
+        }
+
+        public static Transaction pvpKill(double amount, UUID victim, String victimName) {
+            return new Transaction(
+                TransactionType.PVP_KILL,
+                amount,
+                "Killed " + victimName,
+                System.currentTimeMillis(),
+                victim
+            );
+        }
+
+        public static Transaction pvpDeath(double amount, UUID killer, String killerName) {
+            return new Transaction(
+                TransactionType.PVP_DEATH,
+                -amount,
+                "Killed by " + killerName,
+                System.currentTimeMillis(),
+                killer
+            );
+        }
     }
 
     public enum TransactionType {
@@ -193,6 +273,14 @@ public class TransactionLog extends SavedData {
         PAYMENT_RECEIVED,
         ADMIN_ADD,
         ADMIN_REMOVE,
-        TAX
+        TAX,
+        STARTING_BALANCE,
+        DAILY_REWARD,
+        INTEREST,
+        MOB_DROP,
+        COINFLIP_WIN,
+        COINFLIP_LOSS,
+        PVP_KILL,
+        PVP_DEATH
     }
 }

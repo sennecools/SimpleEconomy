@@ -67,12 +67,27 @@ public class ShopItem {
     }
 
     public boolean removeStock(int amount) {
+        // -1 means infinite stock
+        if (stock == -1) {
+            totalSold += amount;
+            return true;
+        }
         if (stock >= amount) {
             stock -= amount;
             totalSold += amount;
             return true;
         }
         return false;
+    }
+
+    public boolean isInfiniteStock() {
+        return stock == -1;
+    }
+
+    public void setInfiniteStock(boolean infinite) {
+        if (infinite) {
+            this.stock = -1;
+        }
     }
 
     public int getMaxStock() {
@@ -84,7 +99,7 @@ public class ShopItem {
     }
 
     public boolean isInStock() {
-        return stock > 0;
+        return stock == -1 || stock > 0;
     }
 
     public CompoundTag save(HolderLookup.Provider provider) {

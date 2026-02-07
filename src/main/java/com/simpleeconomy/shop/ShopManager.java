@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class ShopManager {
 
-    private static final int MAX_SHOPS_PER_PLAYER = 3;
+    private static final int MAX_SHOPS_PER_PLAYER = 1;
     private static final int MAX_ITEMS_PER_SHOP = 27; // 3 rows of 9
 
     public static Shop createShop(ServerPlayer player, String shopName) {
@@ -69,14 +69,17 @@ public class ShopManager {
             return false;
         }
 
-        // Stock = 1 means this listing can be purchased once
-        // The itemStack contains the quantity of items per purchase
-        ShopItem shopItem = new ShopItem(itemStack, price, 1);
+        // Stock = number of items that can be sold
+        // Each purchase sells 1 item at the set price
+        int stock = itemStack.getCount();
+        ItemStack singleItem = itemStack.copy();
+        singleItem.setCount(1);
+        ShopItem shopItem = new ShopItem(singleItem, price, stock);
         shop.addItem(shopItem);
         data.setDirty();
 
-        SimpleEconomy.LOGGER.info("Added item to shop: {} x{} for {} coins",
-            itemStack.getDisplayName().getString(), itemStack.getCount(), price);
+        SimpleEconomy.LOGGER.info("Added item to shop: {} (stock: {}) at {} coins each",
+            itemStack.getDisplayName().getString(), stock, price);
 
         return true;
     }

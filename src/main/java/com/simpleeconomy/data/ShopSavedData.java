@@ -2,7 +2,6 @@ package com.simpleeconomy.data;
 
 import com.simpleeconomy.SimpleEconomy;
 import com.simpleeconomy.shop.Shop;
-import com.simpleeconomy.shop.ShopCategory;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -103,15 +102,6 @@ public class ShopSavedData extends SavedData {
     public List<Shop> getShopsByOwner(UUID ownerUUID) {
         return shops.values().stream()
             .filter(shop -> shop.getOwnerUUID().equals(ownerUUID))
-            .collect(Collectors.toList());
-    }
-
-    public List<Shop> getShopsByCategory(ShopCategory category) {
-        if (category == ShopCategory.GENERAL) {
-            return getAllShops();
-        }
-        return shops.values().stream()
-            .filter(shop -> shop.getCategory() == category)
             .collect(Collectors.toList());
     }
 

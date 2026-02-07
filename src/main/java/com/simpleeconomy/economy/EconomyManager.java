@@ -1,16 +1,14 @@
 package com.simpleeconomy.economy;
 
 import com.simpleeconomy.SimpleEconomy;
+import com.simpleeconomy.config.ModConfig;
 import com.simpleeconomy.data.EconomySavedData;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.UUID;
+import java.util.*;
 
 public class EconomyManager {
-
-    private static final double DEFAULT_STARTING_BALANCE = 0.0;
-    private static final double TAX_RATE = 0.05; // 5% transaction tax
 
     public static double getBalance(MinecraftServer server, UUID playerUUID) {
         EconomySavedData data = EconomySavedData.get(server);
@@ -67,7 +65,7 @@ public class EconomyManager {
         if (amount <= 0) return false;
         if (!hasBalance(from, amount)) return false;
 
-        double tax = applyTax ? amount * TAX_RATE : 0;
+        double tax = applyTax ? amount * ModConfig.getTaxRate() : 0;
         double received = amount - tax;
 
         removeBalance(from, amount);
@@ -81,11 +79,11 @@ public class EconomyManager {
     }
 
     public static double getTaxRate() {
-        return TAX_RATE;
+        return ModConfig.getTaxRate();
     }
 
     public static double calculateTax(double amount) {
-        return amount * TAX_RATE;
+        return amount * ModConfig.getTaxRate();
     }
 
     public static String formatBalance(double amount) {
@@ -94,5 +92,31 @@ public class EconomyManager {
         } else {
             return String.format("%,.2f", amount);
         }
+    }
+
+    /**
+     * Get all balances sorted by amount (highest first)
+     */
+    public static List<Map.Entry<UUID, Double>> getTopBalances(MinecraftServer server) {
+        EconomySavedData data = EconomySavedData.get(server);
+        Map<UUID, Double> balances = data.getAllBalances();
+
+        List<Map.Entry<UUID, Double>> sorted = new ArrayList<>(balances.entrySet());
+        sorted.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+        return sorted;
+    }
+
+    /**
+     * Get a player's rank (1-based) in the leaderboard
+     */
+    public static int getPlayerRank(MinecraftServer server, UUID playerUUID) {
+        List<Map.Entry<UUID, Double>> sorted = getTopBalances(server);
+        for (int i = 0; i < sorted.size(); i++) {
+            if (sorted.get(i).getKey().equals(playerUUID)) {
+                return i + 1;
+            }
+        }
+        return sorted.size() + 1; // Not in list means last
     }
 }

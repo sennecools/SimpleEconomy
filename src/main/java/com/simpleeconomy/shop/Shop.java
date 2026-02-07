@@ -21,7 +21,6 @@ public class Shop {
     private double totalRevenue;
     private long createdTime;
     private boolean featured;
-    private ShopCategory category;
 
     public Shop(UUID ownerUUID, String ownerName, String shopName) {
         this.shopId = UUID.randomUUID();
@@ -34,7 +33,6 @@ public class Shop {
         this.totalRevenue = 0;
         this.createdTime = System.currentTimeMillis();
         this.featured = false;
-        this.category = ShopCategory.GENERAL;
     }
 
     private Shop(UUID shopId) {
@@ -124,14 +122,6 @@ public class Shop {
         this.featured = featured;
     }
 
-    public ShopCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(ShopCategory category) {
-        this.category = category;
-    }
-
     public CompoundTag save(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
         tag.putUUID("shopId", shopId);
@@ -143,7 +133,6 @@ public class Shop {
         tag.putDouble("totalRevenue", totalRevenue);
         tag.putLong("createdTime", createdTime);
         tag.putBoolean("featured", featured);
-        tag.putString("category", category.name());
 
         ListTag itemsTag = new ListTag();
         for (ShopItem item : items) {
@@ -164,14 +153,6 @@ public class Shop {
         shop.totalRevenue = tag.getDouble("totalRevenue");
         shop.createdTime = tag.getLong("createdTime");
         shop.featured = tag.getBoolean("featured");
-
-        if (tag.contains("category")) {
-            try {
-                shop.category = ShopCategory.valueOf(tag.getString("category"));
-            } catch (IllegalArgumentException e) {
-                shop.category = ShopCategory.GENERAL;
-            }
-        }
 
         ListTag itemsTag = tag.getList("items", Tag.TAG_COMPOUND);
         for (int i = 0; i < itemsTag.size(); i++) {
